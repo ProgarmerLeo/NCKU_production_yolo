@@ -1,0 +1,10 @@
+{
+    "detactions_total": 7,
+    "blemishe_total": 5,
+    "trace_rate": 0.3,
+    "hole_rate": 0.4,
+    "missing_rate": 0.3,
+    "blemish_rate": 0.7,
+    "status": "running",
+    "em_stop": true
+}

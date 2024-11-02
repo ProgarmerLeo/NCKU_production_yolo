@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瑕疵統計數據</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>瑕疵統計數據</h1>
+    <p>Detactions: <span id="detactions">0</span></p>
+    <p>Blemish-total: <span id="blemish-total">0</span></p>
+    <p>Hole Rate: <span id="hole-rate">0</span></p>
+    <p>Missing Rate: <span id="missing-rate">0</span></p>
+    <p>Trace Rate: <span id="trace-rate">0</span></p>
+    <p>Blemish Rate: <span id="blemish-rate">0</span></p>
+    <p>Machine Status: <span id="machine-status">stopped</span></p>
+    <button id="emergency-stop-btn">緊急停止</button>
+
+    <!-- Canvas for the pie chart -->
+    <canvas id="blemishChart" width="400" height="400"></canvas>
+
+    <script>
+        let blemishChart;
+
+        async function fetchStats() {
+            const response = await fetch('/get_stats');
+            const data = await response.json();
+            document.getElementById('detactions').textContent = data.detactions_total;
+            document.getElementById('blemish-total').textContent = data.blemishe_total;
+            document.getElementById('hole-rate').textContent = data.hole_rate*100+"%";
+            document.getElementById('missing-rate').textContent = data.missing_rate*100+"%";
+            document.getElementById('trace-rate').textContent = data.trace_rate*100+"%";
+            document.getElementById('blemish-rate').textContent = data.blemish_rate*100+"%";
+            document.getElementById('machine-status').textContent = data.status;
+
+            updateChart(data.blemish_rate);
+        }
+
+        async function sendEmergencyStop() {
+            const response = await fetch('/emergency_stop', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            console.log(result.status);
+        }
+
+        document.getElementById('emergency-stop-btn').addEventListener('click', sendEmergencyStop);
+
+        // Function to update the pie chart
+        function updateChart(blemishRate) {
+            const completeRate = 100 - blemishRate*100; // Assuming total is 100
+
+            if (!blemishChart) {
+                const ctx = document.getElementById('blemishChart').getContext('2d');
+                blemishChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Blemish Rate', 'Complete Rate'],
+                        datasets: [{
+                            data: [blemishRate*100, completeRate],
+                            backgroundColor: ['#dc3545', '#28a745'], // Red and Green colors
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            } else {
+                blemishChart.data.datasets[0].data = [blemishRate*100, completeRate];
+                blemishChart.update();
+            }
+        }
+
+        setInterval(fetchStats, 100);  // 每0.1秒刷新一次數據
+    </script>
+</body>
+</html>
